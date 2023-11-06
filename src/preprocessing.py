@@ -12,14 +12,17 @@ def get_original_data(stock_name,start_date,end_date):
 
 def calculate_moving_average(data, window_size):
     # Assuming data is a pandas DataFrame with the financial data.
+
     moving_averages = data.rolling(window=window_size,min_periods = 1, center = True).mean()
     return moving_averages
 
 def export_data(stock_name,start_date,end_date,window_size):
+
     # Get the original data
     data = get_original_data(stock_name, start_date, end_date)
 
     # Calculate the moving average with a specific window size, e.g., 20 days
+
     data_ma = calculate_moving_average(data, window_size)
     
     file_path_before_rolling = "../data/" + stock_name + "_" + start_date[:4] + "_before.csv"   
@@ -68,5 +71,6 @@ def main():
     window_size = 5
     export_data(stock_name,start_date,end_date,window_size)
     #print(start_date[:4])
+
 if __name__ == '__main__':
     main()
