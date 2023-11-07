@@ -1,6 +1,8 @@
 import yfinance as yf
 import pandas as pd
 import matplotlib.pyplot as plt
+import datetime
+import numpy as np
 
 def get_original_data(stock_name,start_date,end_date):
     data = yf.download(stock_name, start=start_date, end=end_date)
@@ -11,10 +13,16 @@ def get_original_data(stock_name,start_date,end_date):
     data["Volume_change"] = data["Volume"].diff() #difference between Volumes
     return data
 
+def compute_weekday_month(data):
+    #print(type(np.array(data.index)[0]))
+    data["weekday"] = data.index.weekday + 1
+    data["month"] = data.index.month
+    return data
+
 def calculate_moving_average(data, window_size):
     # Assuming data is a pandas DataFrame with the financial data.
-
     moving_averages = data.rolling(window=window_size,min_periods = 1, center = True).mean()
+    moving_averages = compute_weekday_month(moving_averages)
     return moving_averages
 
 def export_data(stock_name,start_date,end_date,window_size):
@@ -44,7 +52,11 @@ def export_data(stock_name,start_date,end_date,window_size):
     plot(data,data_ma)
 
 def plot(data,data_ma):
-    fig, axes = plt.subplots(2,2,figsize = (20,20))
+    subplot_height = 8
+    subplot_width = 8
+    num_row = 3
+    num_col = 2
+    fig, axes = plt.subplots(num_row,num_col,figsize = (subplot_height*num_col,subplot_width*num_col))
     #plot Close value for both data
     axes[0][0].set_xlabel("Date")
     axes[0][0].set_ylabel("Stock Price")
@@ -60,18 +72,37 @@ def plot(data,data_ma):
     axes[0][1].plot(data.index, data.loc[:,"Volume_change"], color = "black", label = "raw")
     axes[0][1].legend(loc="upper left")
 
-    #plot price percentage change
+    #plot price percentage change vs volume change
     axes[1][0].set_xlabel("Volume Difference")
     axes[1][0].set_ylabel("Price Percent Change")
     axes[1][0].set_title("Price Percent Change")
     axes[1][0].scatter(data.loc[:,"Volume_change"], data.loc[:,"Price percentage change"], marker = "o", color = "black", label = "raw")
 
-    #plot price
+    #plot price change vs volume change
     axes[1][1].set_xlabel("Volume Difference")
     axes[1][1].set_ylabel("Price Change")
     axes[1][1].set_title("Price Change")
-    axes[1][1].scatter(data.loc[:,"Volume_change"]**2, data.loc[:,"Difference"]**2, marker = "o", color = "r", label = "raw")
+    axes[1][1].scatter(data.loc[:,"Volume_change"], data.loc[:,"Difference"], marker = "o", color = "r", label = "raw")
+
+    #plot price vs day in the week
+    axes[2][0].set_xlabel("date")
+    axes[2][0].set_ylabel("price")
+    axes[2][0].set_title("differnt weekdays")
+    for i in range(1,6):
+        tmp_df = data_ma[data_ma.loc[:,"weekday"]==i]
+        axes[2][0].plot(tmp_df.index,tmp_df.loc[:,"Price percentage change"],label = f"weekday {i}")
+    axes[2][0].legend(loc="upper left")
     
+    #plot price vs month in the year
+    axes[2][1].set_xlabel("day in month")
+    axes[2][1].set_ylabel("price")
+    axes[2][1].set_title("differnt months")
+    for i in range(1,13):
+        tmp_df = data_ma[data_ma.loc[:,"month"]==i]
+        tmp_df.index = tmp_df.index.day
+        axes[2][1].plot(tmp_df.index,tmp_df.loc[:,"Price percentage change"],label = f"month {i}")
+    axes[2][1].legend(loc="upper left")
+
     plt.show()
     plt.savefig('../../data/plot.png')
 
