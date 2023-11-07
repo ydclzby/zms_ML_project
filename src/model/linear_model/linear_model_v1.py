@@ -7,7 +7,7 @@ import sys
 import os
 
 
-sys.path.append("../preprocessing")
+sys.path.append("../../preprocessing")
 import preprocessing
 
 def linear_train(X_train, y_train, X_test, y_test):
